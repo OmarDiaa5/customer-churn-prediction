@@ -21,3 +21,4 @@ Thumbs.db
 *.joblib
 outputs/
 !models/churn_bundle.joblib
+.streamlit/secrets.toml

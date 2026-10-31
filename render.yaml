@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: telco-churn-api
-    runtime: docker
-    plan: free
-    healthCheckPath: /health
-    autoDeploy: true

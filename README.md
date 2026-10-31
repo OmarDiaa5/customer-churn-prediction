@@ -150,7 +150,8 @@ Microsoft Machine Learning Engineer track.
 ## Serving API
 
 The model is retrained from a script (`python -m churn.train`) and served by a FastAPI app,
-containerized with Docker and deployed on Render (`render.yaml`, auto-deploy on push).
+containerized with Docker (`Dockerfile`). A Streamlit app (`streamlit_app.py`) wraps the model and the
+care agent for the live demo on Streamlit Community Cloud.
 
 | Endpoint | Purpose |
 |---|---|
@@ -165,7 +166,8 @@ Held-out results: **recall 0.904, ROC AUC 0.842**. The score is recall-weighted 
 
 ```bash
 pip install -r requirements.txt
-uvicorn app:app --reload
+uvicorn app:app --reload            # API
+streamlit run streamlit_app.py      # demo UI (scoring + care agent)
 ```
 
 ## Customer-Care Agent

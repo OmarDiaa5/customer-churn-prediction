@@ -20,3 +20,4 @@ Thumbs.db
 *.pkl
 *.joblib
 outputs/
+!models/churn_bundle.joblib

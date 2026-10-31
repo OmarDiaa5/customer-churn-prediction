@@ -144,3 +144,44 @@ requirements.txt
 
 Built by **Omar Diaa** as part of the Digital Egypt Pioneers Initiative (DEPI) — AI & Data Science,
 Microsoft Machine Learning Engineer track.
+
+---
+
+## Serving API
+
+The model is retrained from a script (`python -m churn.train`) and served by a FastAPI app,
+containerized with Docker and deployed on Render (`render.yaml`, auto-deploy on push).
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | Status plus held-out test metrics |
+| `POST /predict` | Recall-weighted `churn_score`, `risk` band (low / medium / high), K-Means segment |
+| `GET /docs` | Interactive API docs |
+
+The training script fits every encoder, scaler and the K-Means segmenter on the training split only.
+Held-out results: **recall 0.904, ROC AUC 0.842**. The score is recall-weighted (SMOTE +
+`scale_pos_weight`), not a calibrated probability: test churn rate is 53% in the high band,
+19% in medium and 4% in low (base rate 26.5%).
+
+```bash
+pip install -r requirements.txt
+uvicorn app:app --reload
+```
+
+## Customer-Care Agent
+
+`agent/care_agent.py` is a bilingual (Egyptian Arabic / English) LangGraph agent on Groq Llama 3.3
+that answers customer questions with three tools:
+
+- **run_sql** — read-only SQL over the customer table (enforced by SQLite `query_only`)
+- **churn_risk** — calls the deployed churn API for the customer's risk band
+- **search_knowledge** — retrieval over a sample plans / retention-offer / billing knowledge base
+
+It checks churn risk before proposing a retention offer and prints the tool trace behind each answer.
+The knowledge base is sample content written for this demo, not a real operator's plans or prices.
+
+```bash
+export GROQ_API_KEY=...            # required
+export CHURN_API_URL=https://...   # optional; falls back to the local model
+python -m agent.care_agent "Customer 7590-VHVEG wants to cancel. What can we offer?"
+```

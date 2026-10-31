@@ -174,6 +174,13 @@ with agent_tab:
     def get_agent():
         return build_agent()
 
+    from agent.care_agent import pick_model  # noqa: E402
+    try:
+        st.caption(f'Model: `{pick_model()}` on Groq')
+    except Exception as e:
+        st.error(f'Could not reach Groq ({type(e).__name__}): {getattr(e, "message", "")[:300]}')
+        st.stop()
+
     st.session_state.setdefault('history', [])
     cols = st.columns(len(EXAMPLES))
     clicked = next((q for col, q in zip(cols, EXAMPLES) if col.button(q, use_container_width=True)), None)
@@ -202,7 +209,8 @@ with agent_tab:
                 elif 'RateLimit' in name:
                     st.error('Groq rate limit reached. Try again in a minute.')
                 else:
-                    st.error(f'The agent hit an error ({name}). Try again.')
+                    # Groq error bodies carry no secrets, so show them to make failures diagnosable
+                    st.error(f'The agent hit an error ({name}): {getattr(e, "message", "")[:300]}')
                 st.stop()
             new = out['messages'][len(msgs):]
             trace = [f"{c['name']}({json.dumps(c['args'], ensure_ascii=False)})"

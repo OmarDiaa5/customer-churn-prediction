@@ -9,6 +9,7 @@ Every answer prints the tool trace that produced it.
 Usage:  python -m agent.care_agent "Customer 7590-VHVEG wants to cancel, what do I offer?"
 Env:    GROQ_API_KEY (required), CHURN_API_URL (optional, e.g. https://<app>.azurewebsites.net)
 """
+import functools
 import json
 import os
 import sqlite3
@@ -95,8 +96,21 @@ SYSTEM = """You are a customer-care assistant for a telecom operator.
 - Keep answers short and end with the next step for the customer."""
 
 
+PREFERRED_MODELS = ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant']
+
+
+@functools.lru_cache(maxsize=1)
+def pick_model() -> str:
+    """First preferred tool-capable model this API key can actually use."""
+    if os.getenv('GROQ_MODEL'):
+        return os.environ['GROQ_MODEL']
+    from groq import Groq
+    available = {m.id for m in Groq().models.list().data}
+    return next((m for m in PREFERRED_MODELS if m in available), PREFERRED_MODELS[0])
+
+
 def build_agent():
-    llm = ChatGroq(model=os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile'), temperature=0)
+    llm = ChatGroq(model=pick_model(), temperature=0)
     return create_react_agent(llm, [run_sql, churn_risk, search_knowledge], prompt=SYSTEM)
 
 
